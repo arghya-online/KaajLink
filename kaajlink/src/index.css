@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #F97316;
+  /* Clean, bold orange */
+  --color-secondary: #FB923C;
+  --color-background: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #0F172A;
+  /* Slate 900 for strong readability */
+  --color-text-secondary: #64748B;
+  /* Slate 500 for subtle text */
+  --color-border: #E2E8F0;
+  /* Slate 200 for clean subtle borders */
+  --color-accent: #FFF7ED;
+  /* Warm tint for backgrounds */
+
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  html {
+    @apply text-text-primary bg-background;
+    font-family: var(--font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply tracking-tight;
+    font-family: var(--font-heading);
+  }
+}

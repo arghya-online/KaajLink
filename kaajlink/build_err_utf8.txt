@@ -1,0 +1,101 @@
+﻿
+> kaajlink@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 6 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 248ms
+At C:\Program Files\nod
+ejs\npm.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([31mΓ£ù[39m   
+  Build failed in 2    
+48ms:String) [], R    
+emoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[31merror during 
+build:
+[31m[@tailwindcss/vite
+:generate:build] y is 
+not a function[31m
+file: 
+[36mS:/Programming Bas
+e/KaajLink/KaajLink/kaa
+jlink/src/index.css[31
+m
+    at Mi (file:///S:/P
+rogramming%20Base/KaajL
+ink/KaajLink/kaajlink/n
+ode_modules/tailwindcss
+/dist/chunk-L5IEUH3R.mj
+s:27:2347)
+    at Fi (file:///S:/P
+rogramming%20Base/KaajL
+ink/KaajLink/kaajlink/n
+ode_modules/tailwindcss
+/dist/chunk-L5IEUH3R.mj
+s:27:1178)
+    at async Gi (file:/
+//S:/Programming%20Base
+/KaajLink/KaajLink/kaaj
+link/node_modules/tailw
+indcss/dist/chunk-L5IEU
+H3R.mjs:36:184)
+    at async ao (file:/
+//S:/Programming%20Base
+/KaajLink/KaajLink/kaaj
+link/node_modules/tailw
+indcss/dist/chunk-L5IEU
+H3R.mjs:38:631)
+    at async vf (file:/
+//S:/Programming%20Base
+/KaajLink/KaajLink/kaaj
+link/node_modules/tailw
+indcss/dist/chunk-L5IEU
+H3R.mjs:38:1406)
+    at async uu (file:/
+//S:/Programming%20Base
+/KaajLink/KaajLink/kaaj
+link/node_modules/@tail
+windcss/node/dist/index
+.mjs:10:3458)
+    at async 
+B.generate (file:///S:/
+Programming%20Base/Kaaj
+Link/KaajLink/kaajlink/
+node_modules/@tailwindc
+ss/vite/dist/index.mjs:
+1:5049)
+    at async 
+Object.handler (file://
+/S:/Programming%20Base/
+KaajLink/KaajLink/kaajl
+ink/node_modules/@tailw
+indcss/vite/dist/index.
+mjs:1:3768)
+    at async transform 
+(file:///S:/Programming
+%20Base/KaajLink/KaajLi
+nk/kaajlink/node_module
+s/rollup/dist/es/shared
+/node-entry.js:21269:16
+)
+    at async ModuleLoad
+er.addModuleSource (fil
+e:///S:/Programming%20B
+ase/KaajLink/KaajLink/k
+aajlink/node_modules/ro
+llup/dist/es/shared/nod
+e-entry.js:21497:36)[3
+9m
