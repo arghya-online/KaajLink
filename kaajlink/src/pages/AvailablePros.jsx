@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Phone, MessageCircle, Star, ShieldCheck, Zap } from 'lucide-react';
-import { workers } from '../data/mockData';
+import { ChevronLeft, MapPin, Phone, MessageCircle, Star, ShieldCheck, Zap, Search } from 'lucide-react';
+import api from '../services/api';
 import Button from '../components/Button';
 
 const AvailablePros = () => {
@@ -11,17 +11,32 @@ const AvailablePros = () => {
     const location = searchParams.get('loc') || 'Your location';
 
     const [isSearching, setIsSearching] = useState(true);
+    const [workers, setWorkers] = useState([]);
 
-    // Filter workers by service to simulate a backend match
-    const matchingWorkers = workers.filter(w => w.service.toLowerCase().includes(serviceCategory.toLowerCase()));
-
-    // Simulate finding animation
     useEffect(() => {
+        const fetchWorkers = async () => {
+            try {
+                const { data } = await api.get(`/workers/service/${encodeURIComponent(serviceCategory)}`);
+                setWorkers(data);
+            } catch (error) {
+                console.error('Failed to fetch workers:', error);
+                // Fallback to all workers
+                try {
+                    const { data } = await api.get('/workers');
+                    setWorkers(data.slice(0, 3));
+                } catch (e) {
+                    console.error('Fallback fetch failed:', e);
+                }
+            }
+        };
+
         const timer = setTimeout(() => {
             setIsSearching(false);
         }, 1500);
+
+        fetchWorkers();
         return () => clearTimeout(timer);
-    }, []);
+    }, [serviceCategory]);
 
     if (isSearching) {
         return (
@@ -57,13 +72,13 @@ const AvailablePros = () => {
 
                 <div className="bg-green-50 text-green-700 p-3 rounded-xl border border-green-200 text-sm font-medium flex items-center gap-2">
                     <Zap size={18} className="text-green-600" />
-                    Found {matchingWorkers.length || 3} professionals ready to help.
+                    Found {workers.length} professionals ready to help.
                 </div>
 
                 {/* Pros List */}
                 <div className="flex flex-col gap-4">
-                    {(matchingWorkers.length > 0 ? matchingWorkers : workers.slice(0, 3)).map(worker => (
-                        <div key={worker.id} className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] p-5">
+                    {workers.map(worker => (
+                        <div key={worker._id} className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] p-5">
                             <div className="flex gap-4 items-start mb-5">
                                 <img
                                     src={worker.image}

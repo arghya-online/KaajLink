@@ -2,16 +2,41 @@ import React, { useState } from 'react';
 import InputField from './InputField';
 import Button from './Button';
 import { MapPin, Image as ImageIcon, CalendarClock, Info } from 'lucide-react';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const BookingForm = ({ onBook, worker }) => {
+    const { isAuthenticated } = useAuth();
     const [description, setDescription] = useState('');
     const [address, setAddress] = useState('');
     const [date, setDate] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Booking submitted:", { description, address, date, workerId: worker?.id });
-        if (onBook) onBook();
+        setError('');
+
+        if (!isAuthenticated) {
+            window.location.href = '/login';
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await api.post('/bookings', {
+                workerId: worker?._id || worker?.id,
+                service: worker?.service,
+                description,
+                address,
+                scheduledDate: date ? new Date(date).toISOString() : new Date().toISOString()
+            });
+            if (onBook) onBook();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create booking. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -79,8 +104,17 @@ const BookingForm = ({ onBook, worker }) => {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" variant="primary" fullWidth size="lg" className="mt-4 shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] hover:shadow-[0_6px_20px_rgba(249,115,22,0.23)] hover:-translate-y-0.5 rounded-2xl h-14 text-base">
-                Confirm Booking
+            {error && (
+                <div className="bg-red-50 text-red-600 border border-red-200 px-4 py-3 rounded-xl text-sm font-medium">
+                    {error}
+                </div>
+            )}
+            <Button type="submit" variant="primary" fullWidth size="lg" className="mt-4 shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] hover:shadow-[0_6px_20px_rgba(249,115,22,0.23)] hover:-translate-y-0.5 rounded-2xl h-14 text-base" disabled={loading}>
+                {loading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                    'Confirm Booking'
+                )}
             </Button>
         </form>
     );

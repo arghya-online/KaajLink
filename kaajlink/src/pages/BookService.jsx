@@ -1,20 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SectionHeader from '../components/SectionHeader';
 import BookingForm from '../components/BookingForm';
-import { workers } from '../data/mockData';
+import api from '../services/api';
 import { ChevronLeft, Star, MapPin } from 'lucide-react';
 
 const BookService = () => {
     const { workerId } = useParams();
     const navigate = useNavigate();
+    const [worker, setWorker] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const worker = workers.find(w => w.id.toString() === workerId) || workers[0];
+    useEffect(() => {
+        const fetchWorker = async () => {
+            try {
+                const { data } = await api.get(`/workers/${workerId}`);
+                setWorker(data);
+            } catch (error) {
+                console.error('Failed to fetch worker:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchWorker();
+    }, [workerId]);
 
     const handleBook = () => {
         alert("Booking successful! Redirecting to your bookings...");
         navigate('/bookings');
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!worker) {
+        return (
+            <div className="p-4 md:p-8 text-center pt-16">
+                <h2 className="text-xl font-bold text-text-primary">Worker not found</h2>
+                <button onClick={() => navigate(-1)} className="text-primary mt-4 font-semibold">Go Back</button>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-50/50 min-h-screen pb-12 pt-4 px-4 md:px-8">

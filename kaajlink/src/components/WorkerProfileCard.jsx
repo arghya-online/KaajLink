@@ -40,7 +40,7 @@ const WorkerProfileCard = ({ worker, onBook }) => {
                         <div className="text-text-secondary flex items-center gap-1.5 text-xs font-medium">
                             <Clock size={12} /> Jobs done
                         </div>
-                        <span className="font-semibold text-sm text-text-primary">124+</span>
+                        <span className="font-semibold text-sm text-text-primary">{worker.jobsDone || 0}+</span>
                     </div>
                 </div>
 

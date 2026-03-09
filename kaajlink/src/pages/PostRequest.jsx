@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, MapPin, Search, CalendarClock, Briefcase } from 'lucide-react';
 import Button from '../components/Button';
-import { services } from '../data/mockData';
+import api from '../services/api';
 
 const PostRequest = () => {
     const navigate = useNavigate();
@@ -15,6 +15,19 @@ const PostRequest = () => {
     const [description, setDescription] = useState('');
     const [address, setAddress] = useState('');
     const [time, setTime] = useState('As soon as possible');
+    const [services, setServices] = useState([]);
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const { data } = await api.get('/services');
+                setServices(data);
+            } catch (error) {
+                console.error('Failed to fetch services:', error);
+            }
+        };
+        fetchServices();
+    }, []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -55,7 +68,7 @@ const PostRequest = () => {
                                 >
                                     <option value="" disabled>Select a service</option>
                                     {services.map(s => (
-                                        <option key={s} value={s}>{s}</option>
+                                        <option key={s._id || s} value={s.name || s}>{s.name || s}</option>
                                     ))}
                                 </select>
                             </div>

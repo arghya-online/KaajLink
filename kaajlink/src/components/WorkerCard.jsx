@@ -1,11 +1,15 @@
 import React from 'react';
 import { Star, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from './Button';
 
 const WorkerCard = ({ worker, onRequest }) => {
+    const navigate = useNavigate();
+    const workerId = worker._id || worker.id;
+
     return (
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md flex flex-col gap-5 group h-full">
-            <div className="flex gap-4 items-start">
+            <div className="flex gap-4 items-start cursor-pointer" onClick={() => navigate(`/worker/${workerId}`)}>
                 <img
                     src={worker.image}
                     alt={worker.name}
@@ -20,7 +24,7 @@ const WorkerCard = ({ worker, onRequest }) => {
                             <Star size={14} className="fill-primary text-primary" />
                             <span>{worker.rating}</span>
                             <span className="text-gray-300 font-normal">・</span>
-                            <span className="text-text-secondary font-normal">120 reviews</span>
+                            <span className="text-text-secondary font-normal">{worker.totalReviews || 0} reviews</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <MapPin size={14} />

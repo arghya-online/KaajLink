@@ -1,22 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WorkerCard from '../components/WorkerCard';
 import SectionHeader from '../components/SectionHeader';
 import ModalBottomSheet from '../components/ModalBottomSheet';
 import BookingForm from '../components/BookingForm';
-import { workers } from '../data/mockData';
+import api from '../services/api';
 
 const WorkersList = () => {
     const { service } = useParams();
     const navigate = useNavigate();
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [workers, setWorkers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // Format the service name from URL for display
     const title = service ? service.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + 's' : 'Workers';
 
-    // In a real app we'd filter workers by service, for now we just use the mock data
-    const filteredWorkers = workers;
+    useEffect(() => {
+        const fetchWorkers = async () => {
+            try {
+                const { data } = await api.get(`/workers/service/${encodeURIComponent(service || '')}`);
+                setWorkers(data);
+            } catch (error) {
+                console.error('Failed to fetch workers:', error);
+                // fallback to all workers
+                const { data } = await api.get('/workers');
+                setWorkers(data);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchWorkers();
+    }, [service]);
 
     const handleRequestService = (worker) => {
         setSelectedWorker(worker);
@@ -41,13 +57,23 @@ const WorkersList = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredWorkers.map(worker => (
-                    <WorkerCard
-                        key={worker.id}
-                        worker={worker}
-                        onRequest={handleRequestService}
-                    />
-                ))}
+                {loading ? (
+                    <div className="col-span-full flex justify-center py-8">
+                        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : workers.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                        <p className="text-text-secondary">No workers found for this service.</p>
+                    </div>
+                ) : (
+                    workers.map(worker => (
+                        <WorkerCard
+                            key={worker._id}
+                            worker={worker}
+                            onRequest={handleRequestService}
+                        />
+                    ))
+                )}
             </div>
 
             <ModalBottomSheet

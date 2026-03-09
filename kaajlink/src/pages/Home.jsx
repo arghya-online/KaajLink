@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import QuickServiceRequestCard from '../components/QuickServiceRequestCard';
 import SectionHeader from '../components/SectionHeader';
 import WorkerCard from '../components/WorkerCard';
-import { workers } from '../data/mockData';
+import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Star } from 'lucide-react';
 
 const Home = () => {
     const navigate = useNavigate();
+    const [topWorkers, setTopWorkers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTopWorkers = async () => {
+            try {
+                const { data } = await api.get('/workers/top');
+                setTopWorkers(data);
+            } catch (error) {
+                console.error('Failed to fetch top workers:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTopWorkers();
+    }, []);
 
     const handleRequestService = (worker) => {
         navigate(`/post-request?service=${worker.service}`);
@@ -42,16 +58,22 @@ const Home = () => {
                     actionLabel="See all"
                 />
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {workers.slice(0, 4).map(worker => (
-                        <div key={worker.id} className="transition-transform hover:-translate-y-0.5 duration-200">
-                            <WorkerCard
-                                worker={worker}
-                                onRequest={handleRequestService}
-                            />
-                        </div>
-                    ))}
-                </div>
+                {loading ? (
+                    <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {topWorkers.map(worker => (
+                            <div key={worker._id} className="transition-transform hover:-translate-y-0.5 duration-200">
+                                <WorkerCard
+                                    worker={worker}
+                                    onRequest={handleRequestService}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </section>
 
             {/* Trust Banner (Mobile Friendly) */}
