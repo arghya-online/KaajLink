@@ -4,6 +4,7 @@ import { ChevronLeft, Save, LogOut, MapPin, Phone, IndianRupee, User, Wrench, In
 import api from '../../services/api';
 import { useWorkerAuth } from '../../context/WorkerAuthContext';
 import LocationPicker from '../../components/LocationPicker';
+import AddressAutocomplete from '../../components/AddressAutocomplete';
 
 const WorkerSettings = () => {
   const navigate = useNavigate();
@@ -117,6 +118,13 @@ const WorkerSettings = () => {
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <MapPin size={18} className="text-primary" /> Your Location
           </h3>
+          <div className="mb-3">
+            <AddressAutocomplete
+              placeholder="Search for your location..."
+              darkMode={true}
+              onSelect={({ lat, lng }) => setCoordinates({ lat, lng })}
+            />
+          </div>
           <LocationPicker
             onLocationSelect={(coords) => setCoordinates(coords)}
             initialPosition={worker?.coordinates}

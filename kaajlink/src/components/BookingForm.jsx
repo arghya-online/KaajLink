@@ -5,6 +5,7 @@ import { MapPin, Image as ImageIcon, CalendarClock, Info } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import LocationPicker from './LocationPicker';
+import AddressAutocomplete from './AddressAutocomplete';
 
 const BookingForm = ({ onBook, worker }) => {
     const { isAuthenticated } = useAuth();
@@ -60,22 +61,17 @@ const BookingForm = ({ onBook, worker }) => {
                 </div>
             </div>
 
-            {/* Address Field */}
+            {/* Address with Autocomplete */}
             <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-semibold text-text-secondary uppercase tracking-wider ml-1">Service Location</label>
-                <div className="relative flex items-center">
-                    <div className="absolute left-4 text-text-secondary">
-                        <MapPin size={20} />
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="Enter your full address"
-                        className="w-full h-14 pl-12 pr-4 bg-gray-50/50 text-sm md:text-base text-text-primary placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white border border-gray-200 rounded-2xl transition-all shadow-sm"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        required
-                    />
-                </div>
+                <AddressAutocomplete
+                    placeholder="Search for your address..."
+                    initialValue={address}
+                    onSelect={({ address: addr, shortAddress, lat, lng }) => {
+                        setAddress(shortAddress || addr);
+                        setCoordinates({ lat, lng });
+                    }}
+                />
             </div>
 
             {/* Map Location Picker */}

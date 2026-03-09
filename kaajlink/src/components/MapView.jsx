@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -47,6 +47,7 @@ const MapView = ({
   style = {},
   showUserLocation = false,
   userPosition = null,
+  userAccuracy = null,
   onMapClick = null,
   height = '300px'
 }) => {
@@ -68,13 +69,29 @@ const MapView = ({
 
         {/* User location marker */}
         {showUserLocation && userPosition && (
-          <Marker position={[userPosition.lat, userPosition.lng]} icon={userIcon}>
-            <Popup>
-              <div className="text-center">
-                <p className="font-bold text-sm">Your Location</p>
-              </div>
-            </Popup>
-          </Marker>
+          <>
+            <Marker position={[userPosition.lat, userPosition.lng]} icon={userIcon}>
+              <Popup>
+                <div className="text-center">
+                  <p className="font-bold text-sm">Your Location</p>
+                  {userAccuracy && <p className="text-xs text-gray-500">Accuracy: ±{userAccuracy > 1000 ? `${(userAccuracy/1000).toFixed(1)}km` : `${Math.round(userAccuracy)}m`}</p>}
+                </div>
+              </Popup>
+            </Marker>
+            {userAccuracy && userAccuracy > 20 && (
+              <Circle
+                center={[userPosition.lat, userPosition.lng]}
+                radius={userAccuracy}
+                pathOptions={{
+                  color: '#3B82F6',
+                  fillColor: '#3B82F6',
+                  fillOpacity: 0.08,
+                  weight: 2,
+                  dashArray: '6, 6',
+                }}
+              />
+            )}
+          </>
         )}
 
         {/* Dynamic markers */}

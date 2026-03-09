@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import SectionHeader from '../components/SectionHeader';
-import { Calendar, Clock, MapPin, User, XCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, XCircle, Navigation, Route } from 'lucide-react';
 import api from '../services/api';
 import Button from '../components/Button';
+import LiveTrackingMap from '../components/LiveTrackingMap';
+import RouteMap from '../components/RouteMap';
 
 const Bookings = () => {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [trackingBookingId, setTrackingBookingId] = useState(null);
+    const [userPosition, setUserPosition] = useState(null);
 
     useEffect(() => {
         fetchBookings();
+        // Get user location for tracking
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => setUserPosition({ lat: 22.572, lng: 88.363 })
+            );
+        }
     }, []);
 
     const fetchBookings = async () => {
@@ -135,6 +146,48 @@ const Bookings = () => {
                                 >
                                     <XCircle size={14} className="mr-1" /> Cancel
                                 </Button>
+                            )}
+
+                            {/* Live Tracking / Route for active bookings */}
+                            {(booking.status === 'confirmed' || booking.status === 'in-progress') && (
+                                <div className="flex flex-col gap-3 mt-1">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setTrackingBookingId(trackingBookingId === booking._id ? null : booking._id)}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                                                trackingBookingId === booking._id
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-100'
+                                            }`}
+                                        >
+                                            <Navigation size={16} />
+                                            {trackingBookingId === booking._id ? 'Tracking Live...' : 'Track Worker Live'}
+                                        </button>
+                                    </div>
+
+                                    {/* Live tracking map */}
+                                    {trackingBookingId === booking._id && (
+                                        <LiveTrackingMap
+                                            workerId={booking.worker?._id}
+                                            workerName={booking.worker?.name || 'Worker'}
+                                            customerPosition={userPosition}
+                                            destinationPosition={booking.coordinates?.lat ? booking.coordinates : null}
+                                            bookingId={booking._id}
+                                            height="300px"
+                                            mode="customer"
+                                        />
+                                    )}
+
+                                    {/* Static route (if worker + customer coordinates available) */}
+                                    {trackingBookingId !== booking._id && booking.worker?.coordinates?.lat && userPosition && (
+                                        <RouteMap
+                                            from={{ lat: booking.worker.coordinates.lat, lng: booking.worker.coordinates.lng, label: `🔧 ${booking.worker.name}` }}
+                                            to={{ lat: userPosition.lat, lng: userPosition.lng, label: '📍 Your Location' }}
+                                            height="200px"
+                                            showDirections={false}
+                                        />
+                                    )}
+                                </div>
                             )}
                         </div>
                     ))}

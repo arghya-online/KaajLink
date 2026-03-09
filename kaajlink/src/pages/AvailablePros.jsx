@@ -4,6 +4,7 @@ import { ChevronLeft, MapPin, Phone, MessageCircle, Star, ShieldCheck, Zap, Sear
 import api from '../services/api';
 import Button from '../components/Button';
 import MapView, { workerIcon, userIcon } from '../components/MapView';
+import RouteMap from '../components/RouteMap';
 
 const AvailablePros = () => {
     const [searchParams] = useSearchParams();
@@ -17,6 +18,8 @@ const AvailablePros = () => {
     const [workers, setWorkers] = useState([]);
     const [showMap, setShowMap] = useState(true);
     const [userPos, setUserPos] = useState(lat && lng ? { lat, lng } : null);
+    const [userAccuracy, setUserAccuracy] = useState(null);
+    const [selectedWorkerForRoute, setSelectedWorkerForRoute] = useState(null);
 
     useEffect(() => {
         const fetchWorkers = async () => {
@@ -40,12 +43,53 @@ const AvailablePros = () => {
             }
         };
 
-        // Get user location if not provided
-        if (!userPos && navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                () => setUserPos({ lat: 22.572, lng: 88.363 }) // Default Kolkata
-            );
+        // Get user location if not provided — try GPS then IP fallback
+        if (!userPos) {
+            const detectLocation = async () => {
+                if (navigator.geolocation) {
+                    try {
+                        const pos = await new Promise((resolve, reject) => {
+                            let best = null;
+                            const wId = navigator.geolocation.watchPosition(
+                                (p) => {
+                                    if (!best || p.coords.accuracy < best.accuracy) {
+                                        best = p.coords;
+                                    }
+                                    if (p.coords.accuracy <= 100) {
+                                        navigator.geolocation.clearWatch(wId);
+                                        resolve(best);
+                                    }
+                                },
+                                (e) => {
+                                    navigator.geolocation.clearWatch(wId);
+                                    if (best) resolve(best);
+                                    else reject(e);
+                                },
+                                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                            );
+                            setTimeout(() => {
+                                navigator.geolocation.clearWatch(wId);
+                                if (best) resolve(best);
+                            }, 8000);
+                        });
+                        setUserPos({ lat: pos.latitude, lng: pos.longitude });
+                        setUserAccuracy(Math.round(pos.accuracy));
+                        return;
+                    } catch {}
+                }
+                // IP-based fallback
+                try {
+                    const res = await fetch('https://ipapi.co/json/');
+                    const data = await res.json();
+                    if (data.latitude && data.longitude) {
+                        setUserPos({ lat: data.latitude, lng: data.longitude });
+                        setUserAccuracy(5000); // IP-based — rough
+                        return;
+                    }
+                } catch {}
+                setUserPos({ lat: 22.572, lng: 88.363 }); // Last resort
+            };
+            detectLocation();
         }
 
         const timer = setTimeout(() => {
@@ -109,14 +153,15 @@ const AvailablePros = () => {
                     </button>
                 </div>
 
-                {/* Map */}
-                {showMap && (
+                {/* Map or Route */}
+                {showMap && !selectedWorkerForRoute && (
                     <MapView
                         center={userPos ? [userPos.lat, userPos.lng] : [22.572, 88.363]}
                         zoom={11}
                         height="280px"
                         showUserLocation={!!userPos}
                         userPosition={userPos}
+                        userAccuracy={userAccuracy}
                         markers={workers.filter(w => w.coordinates?.lat && w.coordinates?.lng).map(w => ({
                             id: w._id,
                             lat: w.coordinates.lat,
@@ -128,9 +173,27 @@ const AvailablePros = () => {
                             image: w.image,
                             popup: true,
                             icon: workerIcon,
-                            onClick: () => navigate(`/worker-profile/${w._id}`)
+                            onClick: () => setSelectedWorkerForRoute(w)
                         }))}
                     />
+                )}
+
+                {/* Route to selected worker */}
+                {showMap && selectedWorkerForRoute && userPos && selectedWorkerForRoute.coordinates?.lat && (
+                    <div className="flex flex-col gap-2">
+                        <RouteMap
+                            from={{ lat: userPos.lat, lng: userPos.lng, label: '📍 Your Location' }}
+                            to={{ lat: selectedWorkerForRoute.coordinates.lat, lng: selectedWorkerForRoute.coordinates.lng, label: `🔧 ${selectedWorkerForRoute.name}` }}
+                            height="280px"
+                            showDirections={true}
+                        />
+                        <button
+                            onClick={() => setSelectedWorkerForRoute(null)}
+                            className="text-sm text-text-secondary hover:text-primary transition-colors text-center py-1 font-medium"
+                        >
+                            ← Back to all workers map
+                        </button>
+                    </div>
                 )}
 
                 {/* Pros List */}
@@ -171,6 +234,24 @@ const AvailablePros = () => {
                                         <MessageCircle size={18} /> WhatsApp
                                     </Button>
                                 </a>
+                            </div>
+
+                            {/* Route & Book buttons */}
+                            <div className="flex gap-3 mt-3">
+                                {userPos && worker.coordinates?.lat && (
+                                    <button
+                                        onClick={() => setSelectedWorkerForRoute(worker)}
+                                        className="flex-1 flex items-center justify-center gap-2 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 rounded-xl h-12 text-sm font-bold transition-all"
+                                    >
+                                        <MapPin size={16} /> View Route
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => navigate(`/worker-profile/${worker._id}`)}
+                                    className="flex-1 flex items-center justify-center gap-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-xl h-12 text-sm font-bold transition-all"
+                                >
+                                    Book →
+                                </button>
                             </div>
                         </div>
                     ))}

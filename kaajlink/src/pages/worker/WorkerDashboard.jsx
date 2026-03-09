@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Clock, CheckCircle2, IndianRupee, MapPin, Bell, Power, PowerOff, Star, TrendingUp } from 'lucide-react';
+import { Briefcase, Clock, CheckCircle2, IndianRupee, MapPin, Bell, Power, PowerOff, Star, TrendingUp, Navigation } from 'lucide-react';
 import api from '../../services/api';
 import { useWorkerAuth } from '../../context/WorkerAuthContext';
 import MapView, { workerActiveIcon, jobIcon } from '../../components/MapView';
+import RouteMap from '../../components/RouteMap';
+import io from 'socket.io-client';
 
 const WorkerDashboard = () => {
   const navigate = useNavigate();
@@ -12,6 +14,61 @@ const WorkerDashboard = () => {
   const [pendingJobs, setPendingJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(worker?.isAvailable ?? true);
+  const [selectedJobForRoute, setSelectedJobForRoute] = useState(null);
+  const [livePosition, setLivePosition] = useState(null);
+  const socketRef = useRef(null);
+  const watchRef = useRef(null);
+
+  // Socket.IO live location broadcasting
+  useEffect(() => {
+    if (!isOnline) return;
+
+    const socket = io('http://localhost:5000', { transports: ['websocket', 'polling'] });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('Worker socket connected');
+      // Emit initial position
+      const coords = worker?.coordinates || { lat: 22.572, lng: 88.363 };
+      socket.emit('worker:online', {
+        workerId: worker?._id,
+        lat: coords.lat,
+        lng: coords.lng,
+      });
+    });
+
+    // Start GPS watch
+    if (navigator.geolocation) {
+      watchRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          // Only update if accuracy is reasonable (< 500m) or if it's the best we have
+          if (accuracy < 500 || !livePosition) {
+            setLivePosition({ lat: latitude, lng: longitude });
+            if (socketRef.current?.connected) {
+              socketRef.current.emit('worker:location-update', {
+                workerId: worker?._id,
+                lat: latitude,
+                lng: longitude,
+              });
+            }
+            // Also update backend
+            api.put('/worker-dashboard/location', { lat: latitude, lng: longitude }).catch(() => {});
+          }
+        },
+        () => {},
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 }
+      );
+    }
+
+    return () => {
+      if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current);
+      if (socketRef.current) {
+        socketRef.current.emit('worker:offline', { workerId: worker?._id });
+        socketRef.current.disconnect();
+      }
+    };
+  }, [isOnline, worker?._id]);
 
   useEffect(() => {
     fetchData();
@@ -147,35 +204,70 @@ const WorkerDashboard = () => {
           </div>
         </div>
 
-        {/* Map showing worker location */}
+        {/* Map showing worker location + route to selected job */}
         {workerData?.coordinates && (
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Your Location</h3>
-            <MapView
-              center={[workerData.coordinates.lat, workerData.coordinates.lng]}
-              zoom={13}
-              height="200px"
-              markers={[
-                {
-                  id: 'self',
-                  lat: workerData.coordinates.lat,
-                  lng: workerData.coordinates.lng,
-                  name: 'You',
-                  service: workerData.service,
-                  popup: true,
-                  icon: workerActiveIcon
-                },
-                ...pendingJobs.filter(j => j.coordinates?.lat).map(j => ({
-                  id: j._id,
-                  lat: j.coordinates.lat,
-                  lng: j.coordinates.lng,
-                  name: j.user?.name || 'Customer',
-                  service: j.service,
-                  popup: true,
-                  icon: jobIcon
-                }))
-              ]}
-            />
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              {selectedJobForRoute ? '🗺️ Route to Job' : 'Your Location'}
+              {isOnline && livePosition && (
+                <span className="ml-2 text-green-400 text-xs font-normal">● Broadcasting live</span>
+              )}
+            </h3>
+
+            {selectedJobForRoute?.coordinates?.lat ? (
+              <div className="flex flex-col gap-2">
+                <RouteMap
+                  from={{
+                    lat: livePosition?.lat || workerData.coordinates.lat,
+                    lng: livePosition?.lng || workerData.coordinates.lng,
+                    label: '🔧 You',
+                  }}
+                  to={{
+                    lat: selectedJobForRoute.coordinates.lat,
+                    lng: selectedJobForRoute.coordinates.lng,
+                    label: `📍 ${selectedJobForRoute.user?.name || 'Customer'}`,
+                  }}
+                  height="250px"
+                  showDirections={true}
+                />
+                <button
+                  onClick={() => setSelectedJobForRoute(null)}
+                  className="text-sm text-gray-400 hover:text-white transition-colors text-center py-1"
+                >
+                  ← Back to overview map
+                </button>
+              </div>
+            ) : (
+              <MapView
+                center={[
+                  livePosition?.lat || workerData.coordinates.lat,
+                  livePosition?.lng || workerData.coordinates.lng
+                ]}
+                zoom={13}
+                height="200px"
+                markers={[
+                  {
+                    id: 'self',
+                    lat: livePosition?.lat || workerData.coordinates.lat,
+                    lng: livePosition?.lng || workerData.coordinates.lng,
+                    name: 'You',
+                    service: workerData.service,
+                    popup: true,
+                    icon: workerActiveIcon
+                  },
+                  ...pendingJobs.filter(j => j.coordinates?.lat).map(j => ({
+                    id: j._id,
+                    lat: j.coordinates.lat,
+                    lng: j.coordinates.lng,
+                    name: j.user?.name || 'Customer',
+                    service: j.service,
+                    popup: true,
+                    icon: jobIcon,
+                    onClick: () => setSelectedJobForRoute(j),
+                  }))
+                ]}
+              />
+            )}
           </div>
         )}
 
@@ -229,6 +321,14 @@ const WorkerDashboard = () => {
                       ✗ Decline
                     </button>
                   </div>
+                  {job.coordinates?.lat && (
+                    <button
+                      onClick={() => setSelectedJobForRoute(job)}
+                      className="w-full mt-2 flex items-center justify-center gap-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 font-semibold py-2.5 rounded-xl transition-colors text-sm"
+                    >
+                      <Navigation size={16} /> View Route & ETA
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

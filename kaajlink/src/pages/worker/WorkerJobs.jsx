@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Clock, MapPin, Phone, CheckCircle2, Play, XCircle, User } from 'lucide-react';
+import { ChevronLeft, Clock, MapPin, Phone, CheckCircle2, Play, XCircle, User, Navigation } from 'lucide-react';
 import api from '../../services/api';
+import RouteMap from '../../components/RouteMap';
+import { useWorkerAuth } from '../../context/WorkerAuthContext';
 
 const WorkerJobs = () => {
   const navigate = useNavigate();
+  const { worker } = useWorkerAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [routeJobId, setRouteJobId] = useState(null);
 
   useEffect(() => {
     fetchJobs();
@@ -176,6 +180,29 @@ const WorkerJobs = () => {
                       </button>
                     )}
                   </div>
+
+                  {/* Route map for active jobs */}
+                  {(job.status === 'confirmed' || job.status === 'in-progress' || job.status === 'pending') && job.coordinates?.lat && worker?.coordinates?.lat && (
+                    <div className="mt-2">
+                      <button
+                        onClick={() => setRouteJobId(routeJobId === job._id ? null : job._id)}
+                        className="w-full flex items-center justify-center gap-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 font-semibold py-2.5 rounded-xl transition-colors text-sm"
+                      >
+                        <Navigation size={16} /> {routeJobId === job._id ? 'Hide Route' : 'View Route & ETA'}
+                      </button>
+
+                      {routeJobId === job._id && (
+                        <div className="mt-3">
+                          <RouteMap
+                            from={{ lat: worker.coordinates.lat, lng: worker.coordinates.lng, label: '🔧 You' }}
+                            to={{ lat: job.coordinates.lat, lng: job.coordinates.lng, label: `📍 ${job.user?.name || 'Customer'}` }}
+                            height="250px"
+                            showDirections={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

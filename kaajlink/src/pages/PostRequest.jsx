@@ -4,6 +4,7 @@ import { ChevronLeft, MapPin, Search, CalendarClock, Briefcase } from 'lucide-re
 import Button from '../components/Button';
 import api from '../services/api';
 import LocationPicker from '../components/LocationPicker';
+import AddressAutocomplete from '../components/AddressAutocomplete';
 
 const PostRequest = () => {
     const navigate = useNavigate();
@@ -95,22 +96,17 @@ const PostRequest = () => {
                             />
                         </div>
 
-                        {/* Location */}
+                        {/* Location with Autocomplete */}
                         <div className="flex flex-col gap-2">
                             <label className="text-[13px] font-semibold text-text-secondary uppercase tracking-wider ml-1">Your Location</label>
-                            <div className="relative flex items-center">
-                                <div className="absolute left-4 text-text-secondary">
-                                    <MapPin size={20} />
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your address or locality"
-                                    className="w-full h-14 pl-12 pr-4 bg-gray-50/50 text-sm md:text-base text-text-primary placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white border border-gray-200 rounded-2xl transition-all"
-                                    value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    required
-                                />
-                            </div>
+                            <AddressAutocomplete
+                                placeholder="Search for your address or locality..."
+                                initialValue={address}
+                                onSelect={({ address: addr, shortAddress, lat, lng }) => {
+                                    setAddress(shortAddress || addr);
+                                    setSelectedLocation({ lat, lng });
+                                }}
+                            />
                         </div>
 
                         {/* Map Location Picker */}

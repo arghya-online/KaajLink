@@ -1,8 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
+import initializeSocket from './socket.js';
 
 // Route imports
 import authRoutes from './routes/auth.js';
@@ -15,6 +18,18 @@ import workerDashboardRoutes from './routes/workerDashboard.js';
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
+
+// Socket.IO setup
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+// Initialize live tracking socket
+initializeSocket(io);
 
 // Middleware
 app.use(cors());
@@ -31,7 +46,7 @@ app.use('/api/worker-dashboard', workerDashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'KaajLink API is running' });
+  res.json({ status: 'OK', message: 'KaajLink API is running', socket: 'enabled' });
 });
 
 // Error handler
@@ -40,7 +55,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} (HTTP + WebSocket)`);
   });
 });
