@@ -9,7 +9,7 @@ const WorkerCard = ({ worker, onRequest }) => {
 
     return (
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md flex flex-col gap-5 group h-full">
-            <div className="flex gap-4 items-start cursor-pointer" onClick={() => navigate(`/worker/${workerId}`)}>
+            <div className="flex gap-4 items-start cursor-pointer" onClick={() => navigate(`/worker-profile/${workerId}`)}>
                 <img
                     src={worker.image}
                     alt={worker.name}

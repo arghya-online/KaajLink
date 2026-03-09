@@ -23,6 +23,10 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  coordinates: {
+    lat: { type: Number },
+    lng: { type: Number }
+  },
   scheduledDate: {
     type: Date,
     required: true
@@ -39,6 +43,13 @@ const bookingSchema = new mongoose.Schema({
   notes: {
     type: String,
     default: ''
+  },
+  completedAt: {
+    type: Date
+  },
+  earnings: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true

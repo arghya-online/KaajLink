@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, MapPin, Search, CalendarClock, Briefcase } from 'lucide-react';
 import Button from '../components/Button';
 import api from '../services/api';
+import LocationPicker from '../components/LocationPicker';
 
 const PostRequest = () => {
     const navigate = useNavigate();
@@ -16,6 +17,7 @@ const PostRequest = () => {
     const [address, setAddress] = useState('');
     const [time, setTime] = useState('As soon as possible');
     const [services, setServices] = useState([]);
+    const [selectedLocation, setSelectedLocation] = useState(null);
 
     useEffect(() => {
         const fetchServices = async () => {
@@ -31,8 +33,15 @@ const PostRequest = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Route to the "finding pros" screen with the selected service category
-        navigate(`/available-pros?service=${encodeURIComponent(serviceType)}&loc=${encodeURIComponent(address)}`);
+        const params = new URLSearchParams({
+            service: serviceType,
+            loc: address
+        });
+        if (selectedLocation) {
+            params.set('lat', selectedLocation.lat);
+            params.set('lng', selectedLocation.lng);
+        }
+        navigate(`/available-pros?${params.toString()}`);
     };
 
     return (
@@ -102,6 +111,15 @@ const PostRequest = () => {
                                     required
                                 />
                             </div>
+                        </div>
+
+                        {/* Map Location Picker */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-[13px] font-semibold text-text-secondary uppercase tracking-wider ml-1">Pin Your Location on Map</label>
+                            <LocationPicker
+                                onLocationSelect={(coords) => setSelectedLocation(coords)}
+                                height="200px"
+                            />
                         </div>
 
                         {/* Time */}

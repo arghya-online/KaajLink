@@ -1,26 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Phone, MessageCircle, Star, ShieldCheck, Zap, Search } from 'lucide-react';
+import { ChevronLeft, MapPin, Phone, MessageCircle, Star, ShieldCheck, Zap, Search, Map as MapIcon, List } from 'lucide-react';
 import api from '../services/api';
 import Button from '../components/Button';
+import MapView, { workerIcon, userIcon } from '../components/MapView';
 
 const AvailablePros = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const serviceCategory = searchParams.get('service') || 'Electrician';
     const location = searchParams.get('loc') || 'Your location';
+    const lat = parseFloat(searchParams.get('lat')) || null;
+    const lng = parseFloat(searchParams.get('lng')) || null;
 
     const [isSearching, setIsSearching] = useState(true);
     const [workers, setWorkers] = useState([]);
+    const [showMap, setShowMap] = useState(true);
+    const [userPos, setUserPos] = useState(lat && lng ? { lat, lng } : null);
 
     useEffect(() => {
         const fetchWorkers = async () => {
             try {
-                const { data } = await api.get(`/workers/service/${encodeURIComponent(serviceCategory)}`);
-                setWorkers(data);
+                // Try nearby endpoint first if we have user coordinates
+                if (userPos) {
+                    const { data } = await api.get(`/workers/nearby?lat=${userPos.lat}&lng=${userPos.lng}&service=${encodeURIComponent(serviceCategory)}&radius=50`);
+                    setWorkers(data);
+                } else {
+                    const { data } = await api.get(`/workers/service/${encodeURIComponent(serviceCategory)}`);
+                    setWorkers(data);
+                }
             } catch (error) {
                 console.error('Failed to fetch workers:', error);
-                // Fallback to all workers
                 try {
                     const { data } = await api.get('/workers');
                     setWorkers(data.slice(0, 3));
@@ -30,13 +40,21 @@ const AvailablePros = () => {
             }
         };
 
+        // Get user location if not provided
+        if (!userPos && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => setUserPos({ lat: 22.572, lng: 88.363 }) // Default Kolkata
+            );
+        }
+
         const timer = setTimeout(() => {
             setIsSearching(false);
         }, 1500);
 
         fetchWorkers();
         return () => clearTimeout(timer);
-    }, [serviceCategory]);
+    }, [serviceCategory, userPos]);
 
     if (isSearching) {
         return (
@@ -74,6 +92,46 @@ const AvailablePros = () => {
                     <Zap size={18} className="text-green-600" />
                     Found {workers.length} professionals ready to help.
                 </div>
+
+                {/* Map/List toggle */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowMap(true)}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${showMap ? 'bg-primary text-white shadow-sm' : 'bg-white text-text-secondary border border-gray-200'}`}
+                    >
+                        <MapIcon size={16} /> Map View
+                    </button>
+                    <button
+                        onClick={() => setShowMap(false)}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${!showMap ? 'bg-primary text-white shadow-sm' : 'bg-white text-text-secondary border border-gray-200'}`}
+                    >
+                        <List size={16} /> List View
+                    </button>
+                </div>
+
+                {/* Map */}
+                {showMap && (
+                    <MapView
+                        center={userPos ? [userPos.lat, userPos.lng] : [22.572, 88.363]}
+                        zoom={11}
+                        height="280px"
+                        showUserLocation={!!userPos}
+                        userPosition={userPos}
+                        markers={workers.filter(w => w.coordinates?.lat && w.coordinates?.lng).map(w => ({
+                            id: w._id,
+                            lat: w.coordinates.lat,
+                            lng: w.coordinates.lng,
+                            name: w.name,
+                            service: w.service,
+                            rating: w.rating,
+                            distance: w.distance || w.calculatedDistance ? `${w.calculatedDistance} km` : '',
+                            image: w.image,
+                            popup: true,
+                            icon: workerIcon,
+                            onClick: () => navigate(`/worker-profile/${w._id}`)
+                        }))}
+                    />
+                )}
 
                 {/* Pros List */}
                 <div className="flex flex-col gap-4">

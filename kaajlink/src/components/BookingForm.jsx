@@ -4,6 +4,7 @@ import Button from './Button';
 import { MapPin, Image as ImageIcon, CalendarClock, Info } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import LocationPicker from './LocationPicker';
 
 const BookingForm = ({ onBook, worker }) => {
     const { isAuthenticated } = useAuth();
@@ -12,6 +13,7 @@ const BookingForm = ({ onBook, worker }) => {
     const [date, setDate] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [coordinates, setCoordinates] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,6 +31,7 @@ const BookingForm = ({ onBook, worker }) => {
                 service: worker?.service,
                 description,
                 address,
+                coordinates,
                 scheduledDate: date ? new Date(date).toISOString() : new Date().toISOString()
             });
             if (onBook) onBook();
@@ -73,6 +76,15 @@ const BookingForm = ({ onBook, worker }) => {
                         required
                     />
                 </div>
+            </div>
+
+            {/* Map Location Picker */}
+            <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-semibold text-text-secondary uppercase tracking-wider ml-1">Pin Location on Map</label>
+                <LocationPicker
+                    onLocationSelect={(coords) => setCoordinates(coords)}
+                    height="180px"
+                />
             </div>
 
             {/* Date/Time Field (New) */}

@@ -133,6 +133,12 @@ const Login = () => {
               Sign Up
             </Link>
           </p>
+          <p className="text-center mt-3 text-xs text-gray-400">
+            Are you a worker?{' '}
+            <Link to="/worker/login" className="text-gray-500 font-semibold hover:text-primary hover:underline">
+              Worker Portal →
+            </Link>
+          </p>
         </div>
       </div>
     </div>

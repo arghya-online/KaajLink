@@ -29,6 +29,7 @@ const Navbar = () => {
                 <Link to="/" className="hover:text-primary transition-colors hover:bg-orange-50 px-3 py-1.5 rounded-md">Home</Link>
                 <Link to="/services" className="hover:text-primary transition-colors hover:bg-orange-50 px-3 py-1.5 rounded-md">Services</Link>
                 <Link to="/bookings" className="hover:text-primary transition-colors hover:bg-orange-50 px-3 py-1.5 rounded-md">Bookings</Link>
+                <Link to="/worker/login" className="hover:text-primary transition-colors hover:bg-orange-50 px-3 py-1.5 rounded-md text-gray-400">Worker Portal</Link>
             </div>
 
             {/* Right Side: Icons */}

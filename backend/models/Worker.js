@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const workerSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   name: {
     type: String,
     required: true,
@@ -9,6 +13,10 @@ const workerSchema = new mongoose.Schema({
   service: {
     type: String,
     required: true
+  },
+  coordinates: {
+    lat: { type: Number, default: 22.57 },
+    lng: { type: Number, default: 88.36 }
   },
   rating: {
     type: Number,
@@ -55,6 +63,14 @@ const workerSchema = new mongoose.Schema({
   isAvailable: {
     type: Boolean,
     default: true
+  },
+  hourlyRate: {
+    type: Number,
+    default: 300
+  },
+  totalEarnings: {
+    type: Number,
+    default: 0
   },
   reviews: [{
     userName: String,

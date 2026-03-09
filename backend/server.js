@@ -9,6 +9,8 @@ import authRoutes from './routes/auth.js';
 import serviceRoutes from './routes/services.js';
 import workerRoutes from './routes/workers.js';
 import bookingRoutes from './routes/bookings.js';
+import workerAuthRoutes from './routes/workerAuth.js';
+import workerDashboardRoutes from './routes/workerDashboard.js';
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/worker-auth', workerAuthRoutes);
+app.use('/api/worker-dashboard', workerDashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
